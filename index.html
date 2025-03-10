@@ -1,0 +1,124 @@
+ <!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>History of Internet in South Africa</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/handlebars@latest/dist/handlebars.js"></script>
+</head>
+
+<body>
+  <!-- Hamburger Button (for mobile) -->
+  <button class="hamburger" aria-label="Menu" aria-expanded="false">
+    <svg viewBox="0 0 100 80" width="30" height="30">
+      <rect width="100" height="15" rx="8"></rect>
+      <rect y="30" width="100" height="15" rx="8"></rect>
+      <rect y="60" width="100" height="15" rx="8"></rect>
+    </svg>
+  </button>
+
+  <!-- Error message (hidden by default) -->
+  <div id="error-alert" style="display: none; color: red;">
+    Error loading content. Please try again later.
+  </div>
+
+  <!-- Handlebars Template -->
+  <script id="page-template" type="text/x-handlebars-template">
+  <div class="content-wrapper">
+    <!-- Header -->
+    <header>
+      <nav>
+        <div class="logo">
+          <img src="{{logo.url}}" alt="{{logo.altText}}">
+        </div>
+        <ul>
+          {{#each navLinks}}
+          <li><a href="{{url}}">{{text}}</a></li>
+          {{/each}}
+        </ul>
+      </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main>
+      <section class="hero">
+        <img src="{{heroImage.url}}" alt="{{heroImage.altText}}">
+        <h1>{{pageTitle}}</h1>
+      </section>
+
+      <div class="content-container"> 
+        <section class="main-content">
+          {{#each bodyContent}}
+          <div class="content-block {{#ifEven @index}}reverse-layout{{/ifEven}}">
+            <div class="image-container">
+              <img src="{{image}}" alt="{{altText}}">
+              {{#if caption}}
+              <div class="image-caption">{{caption}}</div>
+              {{/if}}
+            </div>
+            <div class="text-content">
+              {{#if title}}
+              <h2 class="content-title">{{title}}</h2>
+              {{/if}}
+              <p>{{text}}</p>
+            </div>
+          </div>
+          {{/each}}
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-links">
+      {{#each footerLinks}}
+      <a href="{{url}}">{{text}}</a>
+      {{/each}}
+    </div>
+    <p>Logo temporarily used for educational purposes from Internet South Africa.</p>
+  </footer>
+  </script>
+
+
+  <div id="content"></div>
+
+  <script>
+    // Handlebars helper for alternating layouts to check if an index is even or odd
+    Handlebars.registerHelper('ifEven', function (index, options) {
+      return (index % 2 === 1) ? options.fn(this) : options.inverse(this);
+    });
+
+    // Fetches dynamic content from an external JSON file hosted on Github
+    // The data describes the history of the internet in South Africa
+    fetch('https://eclipse19-stu.github.io/internet-history-project/index.json')
+      .then(response => response.json())
+      .then(data => {
+        // Validate the JSON data
+        import('./validator.js').then(({ PAGE_REQUIREMENTS, validateData }) => {
+          const errors = validateData(data, PAGE_REQUIREMENTS.HOME);
+          // Trigger error alert if json is invalid
+          if (errors.length > 0) {
+            console.error('Validation Errors:', errors);
+            document.getElementById('error-alert').textContent = 'Error: ' + errors.join(', ');
+            document.getElementById('error-alert').style.display = 'block';
+          } else {
+            // If valid, compile and render template
+            const template = Handlebars.compile(document.getElementById('page-template').innerHTML);
+            document.getElementById('content').innerHTML = template(data);
+          }
+        });
+      })
+      .catch(error => {
+        console.error('Fetch Error:', error);
+        document.getElementById('error-alert').style.display = 'block';
+      });
+
+  </script>
+  <script src="hamburger.js"></script>
+</body>
+
+</html>
